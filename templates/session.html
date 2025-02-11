@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Session {{ session_id }}</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.js"></script>
+</head>
+<body>
+    <h1>Session de Planning Poker</h1>
+    <p>Partagez cette URL avec vos collègues :</p>
+    <input type="text" value="{{ request.url }}" id="sessionUrl" readonly>
+    <button onclick="copyLink()">Copier le lien</button>
+
+    <h2>Discussion</h2>
+    <input type="text" id="username" placeholder="Votre pseudo">
+    <button onclick="joinSession()">Rejoindre</button>
+    
+    <div id="chat">
+        <ul id="messages"></ul>
+        <input type="text" id="message" placeholder="Tapez un message..." disabled>
+        <button onclick="sendMessage()" disabled>Envoyer</button>
+    </div>
+
+    <script>
+        var socket = io.connect("http://" + document.domain + ":" + location.port);
+        var sessionId = "{{ session_id }}";
+        var username = "";
+
+        function copyLink() {
+            let copyText = document.getElementById("sessionUrl");
+            copyText.select();
+            document.execCommand("copy");
+            alert("Lien copié !");
+        }
+
+        function joinSession() {
+            username = document.getElementById("username").value;
+            if (username) {
+                socket.emit("join", { session_id: sessionId, username: username });
+
+                document.getElementById("username").disabled = true;
+                document.getElementById("message").disabled = false;
+                document.querySelector("button[onclick='sendMessage()']").disabled = false;
+            }
+        }
+
+        function sendMessage() {
+            let msg = document.getElementById("message").value;
+            if (msg) {
+                socket.emit("message", { session_id: sessionId, username: username, message: msg });
+                document.getElementById("message").value = "";
+            }
+        }
+
+        socket.on("message", function(msg) {
+            let messagesList = document.getElementById("messages");
+            let newMessage = document.createElement("li");
+            newMessage.textContent = msg;
+            messagesList.appendChild(newMessage);
+        });
+
+        window.addEventListener("beforeunload", function() {
+            if (username) {
+                socket.emit("leave", { session_id: sessionId, username: username });
+            }
+        });
+    </script>
+</body>
+</html>
