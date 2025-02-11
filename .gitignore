@@ -169,3 +169,8 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# VSCODE
+.vscode/
+# Ignorer les fichiers .DS_Store générés par macOS
+.DS_Store

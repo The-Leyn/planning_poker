@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poker Planning</title>
+</head>
+<body>
+    <h1>Poker Planning</h1>
+    <button onclick="sendVote(5)">Voter 5</button>
+    <button onclick="sendVote(8)">Voter 8</button>
+
+    <h2>Votes reçus :</h2>
+    <ul id="vote-list"></ul>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.min.js"></script>
+    <script>
+        var socket = io.connect('http://' + document.domain + ':' + location.port);
+
+        // Envoyer un vote
+        function sendVote(vote) {
+            socket.emit('vote', vote);
+        }
+
+        // Recevoir un vote
+        socket.on('new_vote', function(data) {
+            var voteList = document.getElementById('vote-list');
+            var listItem = document.createElement('li');
+            listItem.textContent = 'Vote: ' + data;
+            voteList.appendChild(listItem);
+        });
+    </script>
+</body>
+</html>
