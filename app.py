@@ -23,21 +23,23 @@ def session(session_id):
 
 @socketio.on('join')
 def handle_join(data):
-    """Un utilisateur rejoint une room spécifique."""
     session_id = data['session_id']
     username = data['username']
 
     join_room(session_id)
 
     if session_id not in rooms:
-        rooms[session_id] = {"admin": [request.sid], "users": {}, "votes": {}}
+        rooms[session_id] = {"admin": request.sid, "users": {}}
 
-    rooms[session_id]["users"][request.sid] = {"username": username, "votes": {}}
+    rooms[session_id]['users'][request.sid] = {"username": username}
 
     send(f"{username} a rejoint la session !", room=session_id)
 
-    # Envoie uniquement la liste des utilisateurs
-    emit("update_users", {"users": list(rooms[session_id]["users"].values())}, room=session_id)
+    # Envoie la liste des utilisateurs mis à jour
+    emit("update_users", {"users": [user["username"] for user in rooms[session_id]['users'].values()]}, room=session_id)
+
+    # Envoie l'ID de l'admin à tous les utilisateurs
+    emit("set_admin", {"admin_id": rooms[session_id]["admin"]}, room=session_id)
 
     print(rooms[session_id])
 
@@ -84,6 +86,33 @@ def handle_message(data):
     message = data['message']
     
     send(f"{username} : {message}", room=session_id)  # Envoie le message uniquement à la room
+
+
+@socketio.on('create_vote')
+def handle_create_vote(data):
+    """Seul l'administrateur peut créer un vote."""
+    session_id = data['session_id']
+    user_id = request.sid  # L'ID du socket de l'utilisateur
+
+    # Vérifie si la session existe et si l'utilisateur est l'admin
+    if session_id in rooms and rooms[session_id]["admin"] == user_id:
+        vote_id = str(uuid.uuid4())[:4]  # Générer un ID unique court pour le vote
+        vote_title = data['title']
+
+        if "votes" not in rooms[session_id]:
+            rooms[session_id]["votes"] = {}
+
+        rooms[session_id]["votes"][vote_id] = {
+            "title": vote_title,
+            "votes": {},  # Les votes des utilisateurs
+            "result": {}
+        }
+
+        # Notifie tous les utilisateurs de la création du vote
+        emit("new_vote", {"vote_id": vote_id, "title": vote_title}, room=session_id)
+
+    else:
+        emit("error", {"message": "Seul l'administrateur peut créer un vote."}, to=user_id)
 
 if __name__ == '__main__':
     socketio.run(app, debug=True, host='0.0.0.0', port=80)
