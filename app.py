@@ -1,9 +1,12 @@
 from flask import Flask, render_template, redirect, url_for, request
-from flask_socketio import SocketIO, join_room, leave_room, send
+from flask_socketio import SocketIO, join_room, leave_room, send, emit, disconnect
 import uuid  
 
 app = Flask(__name__)
-socketio = SocketIO(app, cors_allowed_origins="*")  # Permet les connexions WebSocket
+socketio = SocketIO(app, cors_allowed_origins="*")
+
+# Dictionnaire pour suivre les utilisateurs dans chaque room
+rooms = {}
 
 @app.route('/')
 def index():
@@ -25,16 +28,51 @@ def handle_join(data):
     username = data['username']
 
     join_room(session_id)
+
+    # Associer l'ID du socket au username
+    if session_id not in rooms:
+        rooms[session_id] = {}
+    rooms[session_id][request.sid] = username  
+
     send(f"{username} a rejoint la session !", room=session_id)
+
+    # Envoie la liste des utilisateurs mis à jour
+    emit("update_users", {"users": list(rooms[session_id].values())}, room=session_id)
 
 @socketio.on('leave')
 def handle_leave(data):
-    """Un utilisateur quitte la room."""
+    """Un utilisateur quitte la room manuellement."""
     session_id = data['session_id']
     username = data['username']
 
     leave_room(session_id)
+
+    # Supprime l'utilisateur de la liste de la room
+    if session_id in rooms and request.sid in rooms[session_id]:
+        del rooms[session_id][request.sid]
+
+        if not rooms[session_id]:  # Si plus personne dans la room, on la supprime
+            del rooms[session_id]
+
     send(f"{username} a quitté la session.", room=session_id)
+
+    # Met à jour la liste des utilisateurs
+    emit("update_users", {"users": list(rooms.get(session_id, {}).values())}, room=session_id)
+
+@socketio.on('disconnect')
+def handle_disconnect():
+    """Gestion automatique de la déconnexion quand un onglet est fermé."""
+    for session_id, users in rooms.items():
+        if request.sid in users:
+            username = users[request.sid]
+            del users[request.sid]
+
+            send(f"{username} s'est déconnecté.", room=session_id)
+            emit("update_users", {"users": list(users.values())}, room=session_id)
+
+            if not users:  # Supprime la room si elle est vide
+                del rooms[session_id]
+            break
 
 @socketio.on('message')
 def handle_message(data):

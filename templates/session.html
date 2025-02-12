@@ -12,6 +12,9 @@
     <input type="text" value="{{ request.url }}" id="sessionUrl" readonly>
     <button onclick="copyLink()">Copier le lien</button>
 
+    <h2>Participants</h2>
+    <ul id="userList"></ul>
+
     <h2>Discussion</h2>
     <input type="text" id="username" placeholder="Votre pseudo">
     <button onclick="joinSession()">Rejoindre</button>
@@ -58,6 +61,16 @@
             let newMessage = document.createElement("li");
             newMessage.textContent = msg;
             messagesList.appendChild(newMessage);
+        });
+
+        socket.on("update_users", function(data) {
+            let userList = document.getElementById("userList");
+            userList.innerHTML = "";
+            data.users.forEach(user => {
+                let listItem = document.createElement("li");
+                listItem.textContent = user;
+                userList.appendChild(listItem);
+            });
         });
 
         window.addEventListener("beforeunload", function() {
