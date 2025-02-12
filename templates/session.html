@@ -68,7 +68,7 @@
             userList.innerHTML = "";
             data.users.forEach(user => {
                 let listItem = document.createElement("li");
-                listItem.textContent = user;
+                listItem.textContent = user.username;
                 userList.appendChild(listItem);
             });
         });

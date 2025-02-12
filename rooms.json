@@ -1,0 +1,18 @@
+{
+  "admin": "FRkDGdWH8T0iY80ZAAAD",
+  "users": {
+    "idSocket1": { "username": "Jhon" },
+    "idSocket2": { "username": "Alice" }
+  },
+  "votes": {
+    "idVote": {
+      "title": "lorem ipsum",
+      "votes": {
+        "idUser1": { "value": 4 },
+        "idUser2": { "value": 3 },
+        "idUser3": { "value": 5 }
+      },
+      "result": {}
+    }
+  }
+}

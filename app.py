@@ -14,7 +14,7 @@ def index():
 
 @app.route('/create-session')
 def create_session():
-    session_id = str(uuid.uuid4())[:8]  # ID unique (8 caractères)
+    session_id = str(uuid.uuid4())[:16]  # ID unique (8 caractères)
     return redirect(url_for('session', session_id=session_id))
 
 @app.route('/session/<session_id>')
@@ -29,15 +29,17 @@ def handle_join(data):
 
     join_room(session_id)
 
-    # Associer l'ID du socket au username
     if session_id not in rooms:
-        rooms[session_id] = {}
-    rooms[session_id][request.sid] = username  
+        rooms[session_id] = {"admin": [request.sid], "users": {}, "votes": {}}
+
+    rooms[session_id]["users"][request.sid] = {"username": username, "votes": {}}
 
     send(f"{username} a rejoint la session !", room=session_id)
 
-    # Envoie la liste des utilisateurs mis à jour
-    emit("update_users", {"users": list(rooms[session_id].values())}, room=session_id)
+    # Envoie uniquement la liste des utilisateurs
+    emit("update_users", {"users": list(rooms[session_id]["users"].values())}, room=session_id)
+
+    print(rooms[session_id])
 
 @socketio.on('leave')
 def handle_leave(data):
