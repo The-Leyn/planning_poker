@@ -29,7 +29,7 @@ def handle_join(data):
     join_room(session_id)
 
     if session_id not in rooms:
-        rooms[session_id] = {"admin": request.sid, "users": {}}
+        rooms[session_id] = {"admin": request.sid, "voted": {}, "users": {}}
 
     rooms[session_id]['users'][request.sid] = {"username": username}
 
@@ -113,6 +113,57 @@ def handle_create_vote(data):
 
     else:
         emit("error", {"message": "Seul l'administrateur peut créer un vote."}, to=user_id)
+    print(rooms[session_id])
+
+@socketio.on('select_vote')
+def handle_select_vote(data):
+    """Sélectionne le vote actuel parmis la liste des votes"""
+    session_id = data['session_id']
+    user_id = request.sid  # L'ID du socket de l'utilisateur
+
+    # Vérifie si la session existe et si l'utilisateur est l'admin
+    if session_id in rooms and rooms[session_id]["admin"] == user_id:
+        # Vérifie si le vote est bien présent dans la liste des votes
+        if rooms[session_id]["votes"][data["vote_id"]]:
+            rooms[session_id]["voted"] = data["vote_id"]
+
+    print(rooms[session_id])
+
+@socketio.on('send_vote')
+def hand_send_vote(data):
+    """Enregistre le vote de l'utilisateur dans la liste des votes"""
+    session_id = data['session_id']
+    user_id = request.sid  # L'ID du socket de l'utilisateur
+    actual_vote = rooms[session_id]["voted"] # Récupère le vote actuel
+    print("actual_vote", actual_vote)
+
+    # Vérifie si la session existe et un vote est sélectionné
+    if session_id in rooms and actual_vote:
+        print("Il y a un vote sélectionné")
+        
+        # Vérifie si "result" est vide
+        if not rooms[session_id]['votes'][actual_vote]["result"]:  
+            print("Les votes ne sont pas encore terminés")
+
+            # Verifie si l'utilisateur à déjà voté pour le vote
+            # if user_id not in rooms[session_id]['votes'][actual_vote]["votes"]:
+            print("L'utilisateur n'a pas encore voté")
+            rooms[session_id]['votes'][actual_vote]["votes"][user_id] = data['cardValue']
+
+        else:
+            print("Les votes sont terminés")
+
+
+            
+        
+
+
+    else:
+        print("Il n'y a pas de vote sélectionné")
+        # Vérifie si le vote est bien présent dans la liste des votes
+        # if rooms[session_id]["votes"]
+    print(rooms[session_id])
+    
 
 if __name__ == '__main__':
     socketio.run(app, debug=True, host='0.0.0.0', port=80)

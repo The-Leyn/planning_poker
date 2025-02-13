@@ -1,5 +1,6 @@
 {
   "admin": "FRkDGdWH8T0iY80ZAAAD",
+  "voted": "idVote",
   "users": {
     "idSocket1": { "username": "Jhon" },
     "idSocket2": { "username": "Alice" }

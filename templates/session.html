@@ -7,6 +7,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.js"></script>
   </head>
   <body>
+    <a href="{{ url_for('index') }}">Retour home</a>
     <h1>Session de Planning Poker</h1>
     <p>Partagez cette URL avec vos collègues :</p>
     <input type="text" value="{{ request.url }}" id="sessionUrl" readonly />
@@ -25,14 +26,29 @@
       <button onclick="sendMessage()" disabled>Envoyer</button>
     </div>
     <div id="adminControls" style="display: none">
-      <h2>Créer un vote</h2>
+      <h2>Ajouter un vote à la liste</h2>
       <input type="text" id="voteTitle" placeholder="Titre du vote" />
       <button onclick="createVote()">Créer</button>
     </div>
 
-    <h2>Votes en cours</h2>
+    <h2>Listes des votes :</h2>
     <ul id="voteList"></ul>
 
+    <div class="actual-vote">
+      <h2>Aucun vote en cours</h2>
+      <p>Résultat du vote :</p>
+    </div>
+    <div class="container-cards">
+      <p>Choisissez votre carte 👇</p>
+      <button onclick="sendVote(0)">0</button>
+      <button onclick="sendVote(1)">1</button>
+      <button onclick="sendVote(2)">2</button>
+      <button onclick="sendVote(3)">3</button>
+      <button onclick="sendVote(5)">5</button>
+      <button onclick="sendVote(8)">8</button>
+      <button onclick="sendVote(13)">13</button>
+      <button onclick="sendVote(21)">21</button>
+    </div>
     <script>
       var socket = io.connect("http://" + document.domain + ":" + location.port);
       var sessionId = "{{ session_id }}";
@@ -67,6 +83,7 @@
       socket.on("message", function (msg) {
         let messagesList = document.getElementById("messages");
         let newMessage = document.createElement("li");
+
         newMessage.textContent = msg;
         messagesList.appendChild(newMessage);
       });
@@ -107,9 +124,33 @@
       socket.on("new_vote", function (data) {
         let voteList = document.getElementById("voteList");
         let listItem = document.createElement("li");
+        let chooseBtn = document.createElement("button");
+        chooseBtn.textContent = "Lancer le vote";
+        chooseBtn.onclick = function () {
+          selectVote(data.vote_id, data.title);
+        };
         listItem.textContent = data.title + " (Vote ID: " + data.vote_id + ")";
+        listItem.appendChild(chooseBtn);
         voteList.appendChild(listItem);
       });
+
+      // Pour sélectionner parmis la liste des votes le vote actuel.
+      function selectVote(vote_id, title) {
+        console.log("select vote :", vote_id);
+        let actualVoteTitle = document.querySelector(".actual-vote h2");
+        actualVoteTitle.textContent = `Vote en cours : ${title}`;
+        socket.emit("select_vote", { session_id: sessionId, vote_id: vote_id, title: title });
+      }
+
+      // GESTION DES VOTES POUR LES CARDS
+      function sendVote(value) {
+        console.log(value, sessionId);
+        socket.emit("send_vote", { session_id: sessionId, cardValue: value })
+        
+      }
+      //   socket.on("create_cards", function (data) {
+
+      //   })
 
       // Gestion des erreurs (ex: si un non-admin essaie de créer un vote)
       socket.on("error", function (data) {
