@@ -1,0 +1,97 @@
+/* Centre tout le contenu */
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    background-color: #b1e6ff; /* Fond léger pour le contraste */
+}
+
+/* Style du bouton */
+a {
+    font-size: 30px;
+    text-decoration: none;
+    padding: 70px 80px;  /* Plus grand */
+    background-color: #007bff;
+    color: white;
+    border-radius: 20px;
+    transition: all 0.3s ease-in-out;  /* Animation douce */
+    position: relative;
+    z-index: 1;
+}
+
+/* Ajoute un effet de survol */
+a:hover {
+    background-color: #0056b3;
+}
+
+
+/* Première zone bleue claire (petite) */
+a::after,
+a::before {
+    content: "";
+    position: absolute;
+    border-radius: 20px;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+    z-index: -1;
+}
+
+/* Première zone plus proche */
+a::after {
+    top: -20px;
+    left: -20px;
+    right: -20px;
+    bottom: -20px;
+    background-color: rgba(0, 123, 255, 0.2); /* Bleu clair */
+    transition-delay: 0s;
+}
+
+a::before {
+    top: -40px;
+    left: -40px;
+    right: -40px;
+    bottom: -40px;
+    background-color: rgba(0, 123, 255, 0.1); /* Bleu encore plus clair */   
+    transition-delay: 0.15s;
+}
+
+/* Effet d'apparition au survol */
+a:hover::after,
+a:hover::before {
+    opacity: 1;
+}
+
+/* Zones d'effet sur les bords de l'écran */
+.bordure {
+    position: absolute;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+    z-index: 0;
+}
+
+/* Première bordure proche des bords */
+.bordure1 {
+    top: 0%;
+    left: 0%;
+    right: 0%;
+    bottom: 0%;
+    border: 20px solid rgba(0, 123, 255, 0.2);
+    transition-delay: 0s;
+}
+
+/* Deuxième bordure plus grande */
+.bordure2 {
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border: 40px solid rgba(0, 123, 255, 0.1);
+    transition-delay: 0.15s;
+}
+
+/* Effet d'apparition au survol */
+a:hover ~ .bordure {
+    opacity: 1;
+}
