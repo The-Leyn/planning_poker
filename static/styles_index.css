@@ -159,15 +159,15 @@ ul li {
 #adminControls {
     margin-top: auto;
 }
-
+/* 
 #actual-vote {
     text-align: center;
-    /* font-size: 1.2em; */
+    font-size: 1.2em;
     font-weight: bold;
     padding: 15px;
     background: #e3f2fd;
     border-radius: 10px;
-}
+} */
 
 #votesList {
     margin-top: 5px;

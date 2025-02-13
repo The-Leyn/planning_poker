@@ -109,7 +109,7 @@ def handle_create_vote(data):
         }
 
         # Notifie tous les utilisateurs de la création du vote
-        emit("new_vote", {"vote_id": vote_id, "title": vote_title}, room=session_id)
+        emit("new_vote", {"vote_id": vote_id, "title": vote_title, "admin_id": rooms[session_id]["admin"]}, room=session_id)
 
     else:
         emit("error", {"message": "Seul l'administrateur peut créer un vote."}, to=user_id)
@@ -142,16 +142,16 @@ def hand_send_vote(data):
         print("Il y a un vote sélectionné")
         
         # Vérifie si "result" est vide
-        if not rooms[session_id]['votes'][actual_vote]["result"]:  
-            print("Les votes ne sont pas encore terminés")
+        # if not rooms[session_id]['votes'][actual_vote]["result"]:  
+        print("Les votes ne sont pas encore terminés")
 
             # Verifie si l'utilisateur à déjà voté pour le vote
             # if user_id not in rooms[session_id]['votes'][actual_vote]["votes"]:
-            print("L'utilisateur n'a pas encore voté")
-            rooms[session_id]['votes'][actual_vote]["votes"][user_id] = data['cardValue']
+        print("L'utilisateur n'a pas encore voté")
+        rooms[session_id]['votes'][actual_vote]["votes"][user_id] = data['cardValue']
 
-        else:
-            print("Les votes sont terminés")
+        # else:
+        print("Les votes sont terminés")
     else:
         print("Il n'y a pas de vote sélectionné")
         # Vérifie si le vote est bien présent dans la liste des votes
@@ -165,30 +165,35 @@ def handle_reveal_result(data):
     user_id = request.sid  # L'ID du socket de l'utilisateur
     actual_vote = rooms[session_id]["voted"] # Récupère le vote actuel
 
-    # Récupère les notes de chaque user correspondante au vote et calcule la moyenne
-    allVotes = rooms[session_id]['votes'][actual_vote]["votes"]
-    print("allVotes", allVotes)
+    if session_id in rooms and actual_vote and rooms[session_id]["admin"] == user_id:
 
-    averageVote = None
-    vote_values = []  # Liste pour stocker toutes les valeurs
+        # Récupère les notes de chaque user correspondante au vote et calcule la moyenne
+        allVotes = rooms[session_id]['votes'][actual_vote]["votes"]
+        print("allVotes", allVotes)
 
-    # Parcours des votes pour récupérer toutes les valeurs
-    for vote in allVotes.values():
-        print(vote)
-        vote_values.append(vote)  # Ajoute la valeur de chaque vote dans la liste
+        averageVote = None
+        vote_values = []  # Liste pour stocker toutes les valeurs
 
-    # Calcul de la moyenne
-    if vote_values:
-        averageVote = sum(vote_values) / len(vote_values)
-        print("Moyenne des votes:", averageVote)
+        # Parcours des votes pour récupérer toutes les valeurs
+        for vote in allVotes.values():
+            print(vote)
+            vote_values.append(vote)  # Ajoute la valeur de chaque vote dans la liste
+
+        # Calcul de la moyenne
+        if vote_values:
+            averageVote = sum(vote_values) / len(vote_values)
+            print("Moyenne des votes:", averageVote)
+
+            # Vérifie si "result" est vide A ACTIVER POUR NE PAS PERMETRE DE RECALCULER LE RESULT
+            # if not rooms[session_id]['votes'][actual_vote]["result"]: 
+            
+            
+            rooms[session_id]['votes'][actual_vote]["result"] = averageVote
+            send(f"RÉSULTAT : {averageVote}", room=session_id)  # Envoie le message uniquement à la room
 
 
-    # if session_id in rooms and actual_vote and rooms[session_id]["admin"] == user_id:
-    #     # Vérifie si "result" est vide
-    #     if not rooms[session_id]['votes'][actual_vote]["result"]: 
+    print(rooms[session_id])
 
-
-    #         rooms[session_id]['votes'][actual_vote]["result"] = 
 
 
 

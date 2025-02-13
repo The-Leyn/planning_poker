@@ -1,203 +1,209 @@
 <!DOCTYPE html>
 <html lang="fr">
-
-<head>
+  <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Session {{ session_id }}</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.js"></script>
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles_index.css') }}">
-</head>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles_index.css') }}" />
+  </head>
 
-<body>
+  <body>
     <h1>Session de Planning Poker</h1>
 
     <div class="container">
-        <div class="top-container">
-            <div class="gauche">
-                <p>Partagez cette URL avec vos collègues :</p>
-                <input type="text" value="{{ request.url }}" id="sessionUrl" readonly />
-                <button onclick="copyLink()">Copier le lien</button>
+      <div class="top-container">
+        <div class="gauche">
+          <p>Partagez cette URL avec vos collègues :</p>
+          <input type="text" value="{{ request.url }}" id="sessionUrl" readonly />
+          <button onclick="copyLink()">Copier le lien</button>
 
-                <h2>Participants</h2>
-                <ul id="userList"></ul>
+          <h2>Participants</h2>
+          <ul id="userList"></ul>
 
-
-                <input type="text" id="username" placeholder="Votre pseudo" />
-                <button onclick="joinSession()">Rejoindre</button>
-            </div>
-
-            <div class="millieu">
-                <div class="millieu-haut">
-                    <h2>Listes des votes :</h2>
-                    <ul id="voteList"></ul>
-                    <div id="adminControls" style="display: none">
-                        <h2>Ajouter un vote à la liste</h2>
-                        <input type="text" id="voteTitle" placeholder="Titre du vote" />
-                        <button onclick="createVote()">Créer</button>
-                    </div>
-                </div>
-                <div class="millieu-bas">
-                    <h2>Votes en cours :</h2>
-                </div>
-            </div>
-
-            <div class="droit">
-                <h2>Discussion</h2>
-                <div id="tchat">
-                    <ul id="messages"></ul>
-                    <input type="text" id="message" placeholder="Tapez un message..." disabled />
-                    <button onclick="sendMessage()" disabled>Envoyer</button>
-                </div>
-            </div>
+          <input type="text" id="username" placeholder="Votre pseudo" />
+          <button onclick="joinSession()">Rejoindre</button>
         </div>
-        <div class="container-cards">
-            <p>Choisissez votre carte 👇</p>
-            <div>
-                <button class="cards" onclick="sendVote(0)">0</button>
-                <button class="cards" onclick="sendVote(1)">1</button>
-                <button class="cards" onclick="sendVote(2)">2</button>
-                <button class="cards" onclick="sendVote(3)">3</button>
-                <button class="cards" onclick="sendVote(5)">5</button>
-                <button class="cards" onclick="sendVote(8)">8</button>
-                <button class="cards" onclick="sendVote(13)">13</button>
-                <button class="cards" onclick="sendVote(21)">21</button>
+
+        <div class="millieu">
+          <div class="millieu-haut">
+            <h2>Listes des votes :</h2>
+            <ul id="voteList"></ul>
+            <div class="adminControls" style="display: none">
+              <h2>Ajouter un vote à la liste</h2>
+              <input type="text" id="voteTitle" placeholder="Titre du vote" />
+              <button onclick="createVote()">Créer</button>
             </div>
+          </div>
+          <div class="millieu-bas">
+            <h2 id="actual-vote">Aucun vote en cours</h2>
+            <!-- <button onclick="revealResult()">Calculer le resultat</button> -->
+          </div>
         </div>
+
+        <div class="droit">
+          <h2>Discussion</h2>
+          <div id="tchat">
+            <ul id="messages"></ul>
+            <input type="text" id="message" placeholder="Tapez un message..." disabled />
+            <button onclick="sendMessage()" disabled>Envoyer</button>
+          </div>
+        </div>
+      </div>
+      <div class="container-cards">
+        <p>Choisissez votre carte 👇</p>
+        <div>
+          <button class="cards" onclick="sendVote(0)">0</button>
+          <button class="cards" onclick="sendVote(1)">1</button>
+          <button class="cards" onclick="sendVote(2)">2</button>
+          <button class="cards" onclick="sendVote(3)">3</button>
+          <button class="cards" onclick="sendVote(5)">5</button>
+          <button class="cards" onclick="sendVote(8)">8</button>
+          <button class="cards" onclick="sendVote(13)">13</button>
+          <button class="cards" onclick="sendVote(21)">21</button>
+        </div>
+      </div>
     </div>
-</body>
-
+    <a href="{{ url_for('index') }}">Retour à l'index</a>
+  </body>
 </html>
 
-
-    <div class="actual-vote">
-      <h2>Aucun vote en cours</h2>
-      <button onclick="revealResult()">Calculer le resultat</button>
-      <p>Résultat du vote :</p>
-    </div>
-    <div class="container-cards">
-      <p>Choisissez votre carte 👇</p>
-      <button onclick="sendVote(0)">0</button>
-      <button onclick="sendVote(1)">1</button>
-      <button onclick="sendVote(2)">2</button>
-      <button onclick="sendVote(3)">3</button>
-      <button onclick="sendVote(5)">5</button>
-      <button onclick="sendVote(8)">8</button>
-      <button onclick="sendVote(13)">13</button>
-      <button onclick="sendVote(21)">21</button>
-    </div>
 <script>
-    var socket = io.connect("http://" + document.domain + ":" + location.port);
-    var sessionId = "{{ session_id }}";
-    var username = "";
+  var socket = io.connect("http://" + document.domain + ":" + location.port);
+  var sessionId = "{{ session_id }}";
+  var username = "";
 
-    function copyLink() {
-        let copyText = document.getElementById("sessionUrl");
-        copyText.select();
-        document.execCommand("copy");
-        alert("Lien copié !");
+  function copyLink() {
+    let copyText = document.getElementById("sessionUrl");
+    copyText.select();
+    document.execCommand("copy");
+    alert("Lien copié !");
+  }
+
+  function joinSession() {
+    username = document.getElementById("username").value;
+    if (username) {
+      socket.emit("join", { session_id: sessionId, username: username });
+
+      document.getElementById("username").disabled = true;
+      document.getElementById("message").disabled = false;
+      document.querySelector("button[onclick='sendMessage()']").disabled = false;
+    }
+  }
+
+  function sendMessage() {
+    let msg = document.getElementById("message").value;
+    if (msg) {
+      socket.emit("message", { session_id: sessionId, username: username, message: msg });
+      document.getElementById("message").value = "";
+    }
+  }
+
+  socket.on("message", function (msg) {
+    let messagesList = document.getElementById("messages");
+    let newMessage = document.createElement("li");
+
+    newMessage.textContent = msg;
+    messagesList.appendChild(newMessage);
+  });
+
+  socket.on("update_users", function (data) {
+    let userList = document.getElementById("userList");
+    userList.innerHTML = "";
+
+    data.users.forEach((user) => {
+      let listItem = document.createElement("li");
+      listItem.textContent = user;
+      userList.appendChild(listItem);
+    });
+  });
+
+  // Vérifier si l'utilisateur est admin
+  socket.on("set_admin", function (data) {
+    if (data.admin_id === socket.id) {
+      document.querySelector(".adminControls").style.display = "block"; // Affiche le bouton
+    }
+  });
+
+  window.addEventListener("beforeunload", function () {
+    if (username) {
+      socket.emit("leave", { session_id: sessionId, username: username });
+    }
+  });
+
+  function createVote() {
+    let voteTitle = document.getElementById("voteTitle").value;
+    if (voteTitle) {
+      socket.emit("create_vote", { session_id: sessionId, title: voteTitle });
+      document.getElementById("voteTitle").value = ""; // Réinitialise le champ
+    }
+  }
+
+  // Écouter l'événement pour afficher un nouveau vote
+  socket.on("new_vote", function (data) {
+    let voteList = document.getElementById("voteList");
+    let listItem = document.createElement("li");
+
+    console.log(data.admin_id, " ", socket.id);
+
+    // Ajout du titre du vote
+    listItem.textContent = data.title;
+
+    if (data.admin_id === socket.id) {
+      let chooseBtn = document.createElement("button");
+      chooseBtn.textContent = "Lancer le vote";
+      chooseBtn.onclick = function () {
+        selectVote(data.vote_id, data.title, data.admin_id);
+      };
+      listItem.appendChild(chooseBtn);
     }
 
-    function joinSession() {
-        username = document.getElementById("username").value;
-        if (username) {
-            socket.emit("join", { session_id: sessionId, username: username });
+    voteList.appendChild(listItem);
+  });
 
-            document.getElementById("username").disabled = true;
-            document.getElementById("message").disabled = false;
-            document.querySelector("button[onclick='sendMessage()']").disabled = false;
-        }
-    }
+  // Pour sélectionner parmi la liste des votes le vote actuel.
+  function selectVote(vote_id, title, admin_id) {
+    console.log("select vote :", vote_id);
+    let actualVoteTitle = document.querySelector("#actual-vote");
+    actualVoteTitle.textContent = `Vote en cours : ${title}`;
 
-    function sendMessage() {
-        let msg = document.getElementById("message").value;
-        if (msg) {
-            socket.emit("message", { session_id: sessionId, username: username, message: msg });
-            document.getElementById("message").value = "";
-        }
-    }
+    if (socket.id === admin_id) {
+      let container = document.querySelector(".millieu-bas");
 
-    socket.on("message", function (msg) {
-        let messagesList = document.getElementById("messages");
-        let newMessage = document.createElement("li");
-
-
-        newMessage.textContent = msg;
-        messagesList.appendChild(newMessage);
-    });
-
-    socket.on("update_users", function (data) {
-        let userList = document.getElementById("userList");
-        userList.innerHTML = "";
-
-        data.users.forEach((user) => {
-            let listItem = document.createElement("li");
-            listItem.textContent = user;
-            userList.appendChild(listItem);
-        });
-    });
-
-    // Vérifier si l'utilisateur est admin
-    socket.on("set_admin", function (data) {
-        if (data.admin_id === socket.id) {
-            document.getElementById("adminControls").style.display = "block"; // Affiche le bouton
-        }
-    });
-
-    window.addEventListener("beforeunload", function () {
-        if (username) {
-            socket.emit("leave", { session_id: sessionId, username: username });
-        }
-    });
-
-    function createVote() {
-        let voteTitle = document.getElementById("voteTitle").value;
-        if (voteTitle) {
-            socket.emit("create_vote", { session_id: sessionId, title: voteTitle });
-            document.getElementById("voteTitle").value = ""; // Réinitialise le champ
-        }
-    }
-
-    // Écouter l'événement pour afficher un nouveau vote
-    socket.on("new_vote", function (data) {
-        let voteList = document.getElementById("voteList");
-        let listItem = document.createElement("li");
-        let chooseBtn = document.createElement("button");
-        chooseBtn.textContent = "Lancer le vote";
-        chooseBtn.onclick = function () {
-          selectVote(data.vote_id, data.title);
+      // Vérifier si le bouton existe déjà
+      let existingBtn = document.querySelector("#btn-result");
+      if (!existingBtn) {
+        const btnResult = document.createElement("button");
+        btnResult.id = "btn-result"; // Ajouter un ID pour l'identifier
+        btnResult.textContent = "Calculer le résultat";
+        btnResult.onclick = function () {
+          revealResult(vote_id);
         };
-        listItem.textContent = data.title + " (Vote ID: " + data.vote_id + ")";
-        listItem.appendChild(chooseBtn);
-        listItem.appendChild(chooseBtn);
-        voteList.appendChild(listItem);
-      });
-
-      // Pour sélectionner parmis la liste des votes le vote actuel.
-      function selectVote(vote_id, title) {
-        console.log("select vote :", vote_id);
-        let actualVoteTitle = document.querySelector(".actual-vote h2");
-        actualVoteTitle.textContent = `Vote en cours : ${title}`;
-        socket.emit("select_vote", { session_id: sessionId, vote_id: vote_id, title: title });
+        container.appendChild(btnResult);
       }
+    }
 
-      // GESTION DES VOTES POUR LES CARDS
-      function sendVote(value) {
-        console.log(value, sessionId);
+    socket.emit("select_vote", { session_id: sessionId, vote_id: vote_id, title: title });
+    socket.emit("message", { session_id: sessionId, username: username, message: `A lancé le vote de ${title}` });
+  }
 
-        if (socket.emit("send_vote", { session_id: sessionId, cardValue: value })) {
-          // socket.emit("message", { session_id: sessionId, username: username, message: `À voté !` });
-        }
-      }
-      
-      // GESTION DU RÉSULTAT D'UN VOTE
-      function revealResult() {
-        console.log();
-        socket.emit("reveal_result", {session_id: sessionId})
-      }
+  // GESTION DES VOTES POUR LES CARDS
+  function sendVote(value) {
+    console.log(value, sessionId);
 
-    // Gestion des erreurs (ex: si un non-admin essaie de créer un vote)
-    socket.on("error", function (data) {
-        alert(data.message);
-    });
+    if (socket.emit("send_vote", { session_id: sessionId, cardValue: value })) {
+      socket.emit("message", { session_id: sessionId, username: username, message: `À voté !` });
+    }
+  }
+
+  // GESTION DU RÉSULTAT D'UN VOTE
+  function revealResult() {
+    console.log();
+    socket.emit("reveal_result", { session_id: sessionId });
+  }
+
+  // Gestion des erreurs (ex: si un non-admin essaie de créer un vote)
+  socket.on("error", function (data) {
+    alert(data.message);
+  });
 </script>
