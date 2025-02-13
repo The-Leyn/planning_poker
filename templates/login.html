@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion</title>
+</head>
+<body>
+    <h2>Connexion</h2>
+    <form id="loginForm">
+        <input type="email" id="email" placeholder="Email" required><br>
+        <input type="password" id="password" placeholder="Mot de passe" required><br>
+        <button type="submit">Se connecter</button>
+    </form>
+
+    <script>
+        document.getElementById("loginForm").addEventListener("submit", async function(event) {
+            event.preventDefault();
+
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+
+            const graphqlQuery = {
+                query: `
+                    mutation {
+                        loginUser(email: "${email}", password: "${password}") {
+                            success
+                            message
+                            user {
+                                id
+                                username
+                                email
+                            }
+                        }
+                    }
+                `
+            };
+
+            const response = await fetch("http://127.0.0.1:5000/graphql", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(graphqlQuery)
+            });
+
+            const data = await response.json();
+            alert(data.data.loginUser.message);
+        });
+    </script>
+</body>
+</html>

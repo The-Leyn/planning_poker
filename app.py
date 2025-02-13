@@ -13,11 +13,15 @@ app.add_url_rule("/graphql", view_func=GraphQLView.as_view(
 
 @app.route("/")
 def index():
-    return "Hello Web 2"
+   return "Hello Web 2"
 
-@app.route("/register", methods=["GET","POST"])
-def promo():
+@app.route("/register", methods=["GET"])
+def register():
    return render_template("register.html")
+
+@app.route("/login", methods=["GET"])
+def login():
+   return render_template("login.html")
 
 if __name__ == "__main__":
    app.run(debug=True)
