@@ -17,6 +17,10 @@ def create_session():
     session_id = str(uuid.uuid4())[:16]  # ID unique (8 caractères)
     return redirect(url_for('session', session_id=session_id))
 
+@app.route("/register", methods=["GET","POST"])
+def promo():
+   return render_template("register.html")
+
 @app.route('/session/<session_id>')
 def session(session_id):
     return render_template('session.html', session_id=session_id)
