@@ -36,6 +36,7 @@
 
     <div class="actual-vote">
       <h2>Aucun vote en cours</h2>
+      <button onclick="revealResult()">Calculer le resultat</button>
       <p>Résultat du vote :</p>
     </div>
     <div class="container-cards">
@@ -145,12 +146,17 @@
       // GESTION DES VOTES POUR LES CARDS
       function sendVote(value) {
         console.log(value, sessionId);
-        socket.emit("send_vote", { session_id: sessionId, cardValue: value })
-        
-      }
-      //   socket.on("create_cards", function (data) {
 
-      //   })
+        if (socket.emit("send_vote", { session_id: sessionId, cardValue: value })) {
+          // socket.emit("message", { session_id: sessionId, username: username, message: `À voté !` });
+        }
+      }
+      
+      // GESTION DU RÉSULTAT D'UN VOTE
+      function revealResult() {
+        console.log();
+        socket.emit("reveal_result", {session_id: sessionId})
+      }
 
       // Gestion des erreurs (ex: si un non-admin essaie de créer un vote)
       socket.on("error", function (data) {

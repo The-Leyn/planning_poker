@@ -152,18 +152,45 @@ def hand_send_vote(data):
 
         else:
             print("Les votes sont terminés")
-
-
-            
-        
-
-
     else:
         print("Il n'y a pas de vote sélectionné")
         # Vérifie si le vote est bien présent dans la liste des votes
         # if rooms[session_id]["votes"]
     print(rooms[session_id])
     
+@socketio.on("reveal_result")
+def handle_reveal_result(data):
+    """Calcul le résultat du vote et l'enregistre dans les infos du vote"""
+    session_id = data['session_id']
+    user_id = request.sid  # L'ID du socket de l'utilisateur
+    actual_vote = rooms[session_id]["voted"] # Récupère le vote actuel
+
+    # Récupère les notes de chaque user correspondante au vote et calcule la moyenne
+    allVotes = rooms[session_id]['votes'][actual_vote]["votes"]
+    print("allVotes", allVotes)
+
+    averageVote = None
+    vote_values = []  # Liste pour stocker toutes les valeurs
+
+    # Parcours des votes pour récupérer toutes les valeurs
+    for vote in allVotes.values():
+        print(vote)
+        vote_values.append(vote)  # Ajoute la valeur de chaque vote dans la liste
+
+    # Calcul de la moyenne
+    if vote_values:
+        averageVote = sum(vote_values) / len(vote_values)
+        print("Moyenne des votes:", averageVote)
+
+
+    # if session_id in rooms and actual_vote and rooms[session_id]["admin"] == user_id:
+    #     # Vérifie si "result" est vide
+    #     if not rooms[session_id]['votes'][actual_vote]["result"]: 
+
+
+    #         rooms[session_id]['votes'][actual_vote]["result"] = 
+
+
 
 if __name__ == '__main__':
     socketio.run(app, debug=True, host='0.0.0.0', port=80)
