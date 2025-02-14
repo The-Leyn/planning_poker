@@ -1,10 +1,15 @@
-from flask import Flask,render_template
+from flask import Flask, render_template, redirect, url_for, request
+from flask_socketio import SocketIO, join_room, leave_room, send, emit, disconnect
+import uuid
 from flask_graphql import GraphQLView
 from graph import schema
 
 # Création de l'application Flask
 app = Flask(__name__)
+socketio = SocketIO(app, cors_allowed_origins="*")
 
+# Dictionnaire pour suivre les utilisateurs dans chaque room
+rooms = {}
 app.add_url_rule("/graphql", view_func=GraphQLView.as_view(
    "graphql",
    schema=schema,
@@ -22,7 +27,6 @@ def register():
 def login():
    return render_template("login.html")
 
-if __name__ == "__main__":
 @app.route('/create-session')
 def create_session():
     session_id = str(uuid.uuid4())[:16]  # ID unique (8 caractères)
