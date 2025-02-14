@@ -117,17 +117,21 @@ def handle_create_vote(data):
 
 @socketio.on('select_vote')
 def handle_select_vote(data):
-    """Sélectionne le vote actuel parmis la liste des votes"""
+    """Sélectionne le vote actuel parmi la liste des votes"""
     session_id = data['session_id']
     user_id = request.sid  # L'ID du socket de l'utilisateur
 
     # Vérifie si la session existe et si l'utilisateur est l'admin
     if session_id in rooms and rooms[session_id]["admin"] == user_id:
         # Vérifie si le vote est bien présent dans la liste des votes
-        if rooms[session_id]["votes"][data["vote_id"]]:
+        if data["vote_id"] in rooms[session_id]["votes"]:
             rooms[session_id]["voted"] = data["vote_id"]
 
+            # Diffuser à tous les utilisateurs de la session
+            emit("vote_selected", data, room=session_id)
+
     print(rooms[session_id])
+
 
 @socketio.on('send_vote')
 def hand_send_vote(data):
